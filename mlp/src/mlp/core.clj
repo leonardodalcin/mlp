@@ -1,10 +1,26 @@
 (ns mlp.core
   (:require [clj-http.client :as client]
             [jutsu.core :as j]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [clojure.set :as set]
+            [cheshire.core :refer :all]
+            [clojure.java.jdbc :as jdbc]
+            [clj-postgresql.core :as pg]
+            [java-jdbc.ddl :as ddl]))
 
-(j/start-jutsu!)
-(Thread/sleep 1000)
+(def db (pg/pool :host "localhost" :port "5432" :user "postgres" :dbname "mlp" :password "masquesaco"))
+(try (jdbc/db-do-commands db
+  (ddl/create-table :stocks
+    [:date "character varying"]
+    [:open "character varying"]
+    [:high "character varying"]
+    [:low "character varying"]
+    [:close "character varying"]
+    [:adjustedclose "character varying"]
+    [:volume "character varying"]
+    [:dividendamount "character varying"]
+    [:splitcoefficient "character varying"]))
+    (catch Exception e (print "Database already created\n")))
 
 (defn plot-points [graph-name data]
   (j/graph!
@@ -14,30 +30,30 @@
     :mode "markers"
     :type "scatter"}])
 )
+(defn save-recursive [market-data market-data-days] (
 
-(defn parse-response [response]
-  (vector (map read-string (str/split (first (str/split response #"/")) #" "))
-          (map read-string (str/split (second (str/split response #"/")) #" ")))
+    case (into [] market-data-days)
+      [] 0
+      (try
+        ((jdbc/insert! db :stocks
+          {
+           :date (name (first market-data-days))
+           :open (get-in market-data [(first market-data-days) (keyword "1. open")])
+           :high (get-in market-data [(first market-data-days) (keyword "2. high")])
+           :low (get-in market-data [(first market-data-days) (keyword "3. low")])
+           :close (get-in market-data [(first market-data-days) (keyword "4. close")])
+           :adjustedclose (get-in market-data [(first market-data-days) (keyword "5. adjusted close")])
+           :volume (get-in market-data [(first market-data-days) (keyword "6. volume")])
+           :dividendamount (get-in market-data [(first market-data-days) (keyword "7. dividend amount")])
+           :splitcoefficient (get-in market-data [(first market-data-days) (keyword "8. split coefficient")])
+          }
+        ) (save-recursive market-data (drop 1 market-data-days)))
+        (catch Exception e (save-recursive market-data (drop 1 market-data-days))))
+))
+
+(defn get-market-data [] (parse-string (:body (client/get "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=MSFT&apikey=demo")), true))
+(defn -main[]
+  (def market-data (get (get-market-data) (keyword "Time Series (Daily)")))
+  (def market-data-days (keys market-data))
+  (save-recursive market-data market-data-days)
 )
-
-(defn average
-  [numbers]
-    ( / (apply + numbers) (count numbers)))
-
-(defn get-cpu-data [] (parse-response (:body (client/get "http://localhost:3000/mlp" {:headers {:access-token "1234"}}))))
-
-(defn -main
-  "I don't do a whole lot ... yet."
-  [& args]
-  (plot-points "1" (get-cpu-data))
-  ; (plot-points "2" (get-cpu-data))
-)
-
-;Construir um programa de mineração ou processamento de dados, onde os dados são colocados na entrada
-; de maneira continua e o sistema deve realizar operações estatísticas sobre eles.
-; Desvio padrao
-; maximo
-; minimo
-; media
-; plotar significancia https://en.wikipedia.org/wiki/Statistics#Mathematical_statistics
-;
