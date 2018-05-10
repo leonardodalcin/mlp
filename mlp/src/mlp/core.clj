@@ -14,6 +14,7 @@
 (try (jdbc/db-do-commands db
   (ddl/create-table :stocks
     [:date "character varying"]
+    [:date "character varying" :key :primary]
     [:open "character varying"]
     [:high "character varying"]
     [:low "character varying"]
