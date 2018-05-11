@@ -10,7 +10,8 @@
                  [org.clojure/java.jdbc "0.7.6"]
                  [clj-postgresql "0.7.0"]
                  [clj-time "0.14.3"]
-                 [java-jdbc/dsl "0.1.0"]]
+                 [java-jdbc/dsl "0.1.0"]
+                 [org.clojure/math.numeric-tower "0.0.4"]]
   :main ^:skip-aot mlp.core
   :target-path "target/%s"
   :jvm-opts ["--add-modules" "java.xml.bind"]
