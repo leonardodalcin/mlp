@@ -11,6 +11,10 @@
             [clojure.math.numeric-tower :as math]))
 (j/start-jutsu!)
 
+(load "graph")
+
+
+
 (def db (pg/pool :host "localhost" :port "5432" :user "postgres" :dbname "postgres" :password "postgres"))
 (try (jdbc/db-do-commands db
   (ddl/create-table :stocks
