@@ -12,9 +12,27 @@
 (j/start-jutsu!)
 
 (load "graph")
+(load "data-fetcher")
 (load "market-data")
 
 (defn -main
     "I can say 'Hello World'."
     []
-    (print (createMarketData)))
+    (print "Chame as funções (daily), (weekly) ou (monthly) para ver os resultados.")
+)
+
+(defn daily []
+    (show (MarketData (fetch (DataFetcher "daily"))))
+)
+
+(defn weekly []
+    (show (MarketData (fetch (DataFetcher "weekly"))))
+)
+
+(defn monthly []
+    (show (MarketData (fetch (DataFetcher "monthly"))))
+)
+
+(defn custom [data]
+    (show (MarketData data))
+)

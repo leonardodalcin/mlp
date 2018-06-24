@@ -1,27 +1,25 @@
 ; Interface para a criação da classe logo abaixo
-(defprotocol MarketDataInterface)
+(defprotocol marketDataInterface
+    (show [this]))
 
-; MarketData possui um construtor padrão que armazena o conteúdo do parâmetro 'db'
-; para acessá-lo, é necessário usar (:db this)
-(defrecord MarketData [data]
+; marketData possui um construtor padrão que armazena o conteúdo do parâmetro 'db'
+; para acessá-lo, é necessário usar (:data this)
+(defrecord marketData [data]
     ; Herda da interface MarketDataInterface
-    MarketDataInterface)
+    marketDataInterface
+    ; Imprime um gráfico com os dados resgatados
+    (show [this]
+        (let [g (Graph. "test graph")]
+            (do
+                (plot g)
+                (map (fn [entry] (add-point g (get entry :day) (get entry :value))) (:data this))))))
 
 ; Não é possível fazer construtores customizados em Clojure,
 ; então é necessário fazer uma função separada para atuar como construtor.
 ; https://stuartsierra.com/2015/05/17/clojure-record-constructors
-(defn createMarketData []
-    ; Busca pelo histórico de valores de BitCoin na API do site AlphaVantage e
-    ; constrói uma classe do tipo MarketData
-    (sort-by :day
-        (let [raw-data (parse-string (:body (client/get "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=MSFT&apikey=demo")), true)]
-            (let [data (get raw-data (keyword "Time Series (Daily)"))]
-                (for [d data]
-                    {
-                        :day (name (key d))
-                        :value (get-in d [1 (keyword "4. close")])
-                    })
-            )
-        )
-    )
+
+; Este construtor está aqui apenas como açucar sintático
+; Ele simplesmente cria uma instância de marketData com os mesmos dados passados
+(defn MarketData [data]
+    (marketData. data)
 )
