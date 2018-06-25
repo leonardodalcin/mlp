@@ -1,38 +1,32 @@
 (ns mlp.core
-  (:require [clj-http.client :as client]
-            [jutsu.core :as j]
-            [clojure.string :as str]
-            [clojure.set :as set]
-            [cheshire.core :refer :all]
-            [clojure.java.jdbc :as jdbc]
-            [clj-postgresql.core :as pg]
-            [java-jdbc.ddl :as ddl]
-            [clj-time.core :as t]
-            [clojure.math.numeric-tower :as math]))
+    (:require
+        [jutsu.core :as j]
+        [mlp.graph :as graph]
+        [mlp.line-graph :as line]
+        [mlp.candle-graph :as candle]
+        [mlp.ohlc-graph :as ohlc]
+        [mlp.bar-graph :as bar]
+        [mlp.data-fetcher :as fetcher]
+    )
+)
 (j/start-jutsu!)
 
-(load "graph")
-(load "data-fetcher")
-(load "market-data")
-
-(defn -main
-    "I can say 'Hello World'."
-    []
-    (print "Chame as funções (daily), (weekly) ou (monthly) para ver os resultados.")
+(defn -main []
+    (print "Chame a função (plot type interval) para mostrar os gráficos.")
 )
 
-(defn daily []
-    (show (MarketData (fetch (DataFetcher "daily"))))
+(defn plot-data [type data name]
+    (case type
+        "line" (graph/plot (line/line-graph name data))
+        "bar" (graph/plot (bar/bar-graph name data))
+        "candle" (graph/plot (candle/candle-graph name data))
+        "ohlc" (graph/plot (ohlc/ohlc-graph name data))
+        (throw (Exception. "Graph type must be one of the following: 'line','bar','candle' or 'ohlc'"))
+    )
 )
 
-(defn weekly []
-    (show (MarketData (fetch (DataFetcher "weekly"))))
-)
-
-(defn monthly []
-    (show (MarketData (fetch (DataFetcher "monthly"))))
-)
-
-(defn custom [data]
-    (show (MarketData data))
+; Polimorfismo paramétrico
+(defn plot-by-interval
+    ([type interval] (plot-data type (fetcher/fetch (fetcher/data-fetcher interval)) "Bitcoin"))
+    ([type interval name] (plot-data type (fetcher/fetch (fetcher/data-fetcher interval)) name))
 )
